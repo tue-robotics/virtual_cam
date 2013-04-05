@@ -57,11 +57,16 @@ int main(int argc, char **argv) {
         }
     }
 
+    string frame_id = "/openni_rgb_optical_frame";
+
     ros::Rate r(10);
     while(ros::ok()) {
         rgb.header.stamp = ros::Time::now();
+        rgb.header.frame_id = frame_id;
         depth.header.stamp = ros::Time::now();
+        depth.header.frame_id = frame_id;
         cam_info.header.stamp = ros::Time::now();
+        cam_info.header.frame_id = frame_id;
 
         pub_rgb.publish(rgb);
         pub_depth.publish(depth);
