@@ -1,0 +1,26 @@
+<package>
+  <description brief="virtual_cam">
+
+     virtual_cam
+
+  </description>
+  <author>sdries</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/virtual_cam</url>
+  <depend package="roscpp"/>
+  <depend package="sensor_msgs"/>
+
+  <depend package="opencv2"/>
+  <depend package="message_filters"/>
+  <depend package="cv_bridge"/>
+  <depend package="stereo_msgs"/>
+  <depend package="image_geometry"/>
+  <depend package="rosbag"/>
+
+
+  <rosdep name="yaml-cpp" />
+
+</package>
+
+
