@@ -1,15 +1,17 @@
 #include <ros/ros.h>
 
 // OpenCv
-//#include "cv.h"
-//#include "highgui.h"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 //#include "image_geometry/pinhole_camera_model.h"
 
 // For transforming ROS/OpenCV images
-//#include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.h>
 //#include <sensor_msgs/image_encodings.h>
 
 // Messages
+#include <std_msgs/String.h>
+#include <std_msgs/Bool.h>
 #include "sensor_msgs/Image.h"
 #include "sensor_msgs/CameraInfo.h"
 #include "stereo_msgs/DisparityImage.h"
@@ -23,6 +25,8 @@
 
 #include <rosbag/bag.h>
 
+#include "virtual_cam/cheese.h"
+
 
 using namespace std;
 
@@ -33,9 +37,35 @@ string filename;
 
 bool stored = false;
 
-void ImageCallback(const sensor_msgs::ImageConstPtr& image_msg,
-        const sensor_msgs::CameraInfoConstPtr& cam_info_msg,
-        const sensor_msgs::ImageConstPtr& depth_image_msg) {
+
+//Stuff for the cheese service
+ros::ServiceServer snapShotService;
+sensor_msgs::ImageConstPtr rgb_image;
+
+
+/// Take a picture service, saves as png
+bool takeAPicturePNG(virtual_cam::cheeseRequest &req, virtual_cam::cheeseResponse& resp)
+{
+    string fn = req.fileName;
+    cv::Mat picture = cv_bridge::toCvCopy(rgb_image)->image;
+
+    cv::imwrite(fn, picture);
+    resp.success = true;
+    return true;
+}
+
+
+void ImageCallbackCheese(const sensor_msgs::ImageConstPtr image_msg,
+        const sensor_msgs::CameraInfoConstPtr cam_info_msg,
+        const sensor_msgs::ImageConstPtr depth_image_msg)
+{
+    rgb_image = image_msg;
+}
+
+
+void ImageCallback(const sensor_msgs::ImageConstPtr image_msg,
+        const sensor_msgs::CameraInfoConstPtr cam_info_msg,
+        const sensor_msgs::ImageConstPtr depth_image_msg) {
 
     rosbag::Bag bag_out;
     bag_out.open(filename, rosbag::bagmode::Write);
@@ -47,15 +77,13 @@ void ImageCallback(const sensor_msgs::ImageConstPtr& image_msg,
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc,argv,"NODE_NAME");
+    ros::init(argc,argv,"virtual_cam");
     ros::NodeHandle nh("~");
 
     if (argc != 2) {
-        cout << "Usage: save FILENAME.yaml" << endl;
+        cout << "Usage: save MODE [FILENAME.yaml]" << endl;
         return 1;
     }
-
-    filename = argv[1];
 
     message_filters::Subscriber<sensor_msgs::Image> sub_img(nh, "/camera/rgb/image_rect_color", 1);
     message_filters::Subscriber<sensor_msgs::CameraInfo> sub_cam_info(nh, "/camera/rgb/camera_info", 1);
@@ -63,16 +91,33 @@ int main(int argc, char **argv) {
 
     // register the subscribers using approximate synchronizer
     message_filters::Synchronizer<CamSyncPolicy> sync(CamSyncPolicy(25), sub_img, sub_cam_info, sub_disp_img);
-    sync.registerCallback(boost::bind(&ImageCallback, _1, _2, _3));
 
-    ros::Rate r(10);
-    while(ros::ok() && !stored) {
-        ros::spinOnce();
-        r.sleep();
+    if(strcmp(argv[1], "SERVICE") == 0)
+    {
+        ROS_INFO("Started in service mode...");
+        sync.registerCallback(boost::bind(&ImageCallbackCheese, _1, _2, _3));
+        snapShotService = nh.advertiseService<virtual_cam::cheeseRequest, virtual_cam::cheeseResponse>("cheese", boost::bind(&takeAPicturePNG, _1, _2));
+        ros::Rate r(2);
+        while(ros::ok()) {
+            ros::spinOnce();
+            r.sleep();
+        }
     }
+    else
+    {
+        ROS_INFO("Started in stand-alone mode...");
+        filename = argv[1];
 
-    if (stored) {
-        cout << "Success" << endl;
+        sync.registerCallback(boost::bind(&ImageCallback, _1, _2, _3));
+        ros::Rate r(10);
+        while(ros::ok() && !stored) {
+            ros::spinOnce();
+            r.sleep();
+        }
+
+        if (stored) {
+            cout << "Success" << endl;
+        }
     }
 
 }
