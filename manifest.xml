@@ -19,8 +19,12 @@
   <depend package="image_geometry"/>
   <depend package="rosbag"/>
 
-
   <rosdep name="yaml-cpp" />
+
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -limage_loader"/>
+  </export>
+
 
 </package>
 
