@@ -77,7 +77,7 @@ void ImageCallback(const sensor_msgs::ImageConstPtr image_msg,
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc,argv,"virtual_cam");
+    ros::init(argc,argv,"virtual_cam_saver");
     ros::NodeHandle nh("~");
 
     if (argc != 2) {

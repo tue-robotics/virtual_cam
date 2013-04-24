@@ -32,11 +32,12 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
+rosbuild_add_library(image_loader src/Loader.cpp ${HEADER_FILES})
 
 rosbuild_add_executable(save src/save.cpp)
 target_link_libraries(save yaml-cpp)
-rosbuild_link_boost(save signals)
+#rosbuild_link_boost(save signals)
 
 rosbuild_add_executable(load src/load.cpp)
 rosbuild_link_boost(save signals)
-target_link_libraries(load yaml-cpp)
+target_link_libraries(load yaml-cpp image_loader)
