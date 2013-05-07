@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh("~");
 
     if (argc != 2) {
-        cout << "Usage: save MODE [FILENAME.yaml]" << endl;
+        cout << "Usage: save MODE [FILENAME]" << endl;
         return 1;
     }
 
