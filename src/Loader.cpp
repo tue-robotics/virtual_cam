@@ -1,6 +1,12 @@
 #include "virtual_cam/Loader.h"
 
+#include <sensor_msgs/image_encodings.h>
+
 using namespace std;
+
+ImageLoader::ImageLoader() {
+    nh_ = new ros::NodeHandle();
+}
 
 ImageLoader::ImageLoader(const std::string& rgb_topic, const std::string& depth_topic, const std::string& info_topic, const std::string& frame_id) : frame_id_(frame_id) {
     nh_ = new ros::NodeHandle();
@@ -35,6 +41,28 @@ void ImageLoader::load(const std::string& filename) {
             cam_info = *m.instantiate<sensor_msgs::CameraInfo>();
             cam_info.header.frame_id = frame_id_;
         }
+    }
+}
+
+cv::Mat ImageLoader::getDepthImage() const {
+    // Convert depth image
+    try {
+        cv_bridge::CvImagePtr depth_img_ptr = cv_bridge::toCvCopy(depth, "32FC1");
+        return depth_img_ptr->image;
+    } catch (cv_bridge::Exception& e) {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return cv::Mat();
+    }
+}
+
+cv::Mat ImageLoader::getRGBImage() const {
+    // Convert RGB image
+    try {
+        cv_bridge::CvImagePtr img_ptr = cv_bridge::toCvCopy(rgb, sensor_msgs::image_encodings::BGR8);
+        return img_ptr->image;
+    } catch (cv_bridge::Exception& e) {
+        ROS_ERROR("cv_bridge exception in imageCallback: %s", e.what());
+        return cv::Mat();
     }
 }
 
