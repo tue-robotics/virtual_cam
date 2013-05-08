@@ -53,7 +53,8 @@ Image::~Image() {
 }
 
 void Image::saveToFile(const std::string& filename) {
-    ros::Time time = ros::Time::now();
+    //ros::Time time = ros::Time::now();
+    ros::Time time(13000000); // todo find current time without having to initialize ROS
 
     rosbag::Bag bag_out;
     bag_out.open(filename, rosbag::bagmode::Write);

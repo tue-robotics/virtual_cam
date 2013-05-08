@@ -20,6 +20,8 @@ class Image {
 
 public:
 
+    Image();
+
     static Image loadFromFile(const std::string& filename);
 
     virtual ~Image();
@@ -39,8 +41,6 @@ public:
     void setMaskImage(const cv::Mat& image);
 
 protected:
-
-    Image();
 
     sensor_msgs::Image rgb_msg_;
     sensor_msgs::Image depth_msg_;
