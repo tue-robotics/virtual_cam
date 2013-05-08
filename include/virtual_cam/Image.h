@@ -42,9 +42,14 @@ protected:
 
     Image();
 
-    sensor_msgs::Image rgb;
-    sensor_msgs::Image depth;
-    sensor_msgs::Image mask;
+    sensor_msgs::Image rgb_msg_;
+    sensor_msgs::Image depth_msg_;
+    sensor_msgs::Image mask_msg_;
+
+    cv::Mat rgb_image_;
+    cv::Mat depth_image_;
+    cv::Mat mask_image_;
+
     sensor_msgs::CameraInfo cam_info;
 
 };

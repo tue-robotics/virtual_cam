@@ -14,16 +14,32 @@ Image Image::loadFromFile(const std::string& filename) {
 
     BOOST_FOREACH(rosbag::MessageInstance const m, view) {
         if (m.getTopic() == "rgb") {
-            image.rgb = *m.instantiate<sensor_msgs::Image>();
-            //image.rgb.header.frame_id = frame_id_;
+            image.rgb_msg_ = *m.instantiate<sensor_msgs::Image>();
+            try {
+                cv_bridge::CvImagePtr img_ptr = cv_bridge::toCvCopy(image.rgb_msg_, sensor_msgs::image_encodings::BGR8);
+                image.rgb_image_ = img_ptr->image;
+            } catch (cv_bridge::Exception& e) {
+                ROS_ERROR("cv_bridge exception: %s", e.what());
+            }
         } else if (m.getTopic() == "depth") {
-            image.depth = *m.instantiate<sensor_msgs::Image>();
-            //image.depth.header.frame_id = frame_id_;
+            image.depth_msg_ = *m.instantiate<sensor_msgs::Image>();
+            try {
+                cv_bridge::CvImagePtr depth_img_ptr = cv_bridge::toCvCopy(image.depth_msg_, "32FC1");
+                image.depth_image_ = depth_img_ptr->image;
+            } catch (cv_bridge::Exception& e) {
+                ROS_ERROR("cv_bridge exception: %s", e.what());
+
+            }
+        } else if (m.getTopic() == "mask") {
+            image.mask_msg_ = *m.instantiate<sensor_msgs::Image>();
+            try {
+                cv_bridge::CvImagePtr depth_img_ptr = cv_bridge::toCvCopy(image.mask_msg_, sensor_msgs::image_encodings::TYPE_8UC1);
+                image.mask_image_ = depth_img_ptr->image;
+            } catch (cv_bridge::Exception& e) {
+                ROS_ERROR("cv_bridge exception: %s", e.what());
+            }
         } else if (m.getTopic() == "camera_info") {
             image.cam_info = *m.instantiate<sensor_msgs::CameraInfo>();
-            //image.cam_info.header.frame_id = frame_id_;
-        } else if (m.getTopic() == "mask") {
-            image.mask = *m.instantiate<sensor_msgs::Image>();
         }
     }
 
@@ -42,101 +58,63 @@ void Image::saveToFile(const std::string& filename) {
     rosbag::Bag bag_out;
     bag_out.open(filename, rosbag::bagmode::Write);
 
-    if (!rgb.data.empty()) {
-        bag_out.write("rgb", time, rgb);
+    if (rgb_image_.cols > 0 ) {
+        cv_bridge::CvImage cvi;
+        cvi.header.stamp = time;
+        cvi.header.frame_id = "";
+        cvi.encoding = sensor_msgs::image_encodings::BGR8;
+        cvi.image = rgb_image_;
+        cvi.toImageMsg(rgb_msg_);
+        bag_out.write("rgb", time, rgb_msg_);
     }
 
-    if (!depth.data.empty()) {
-        bag_out.write("depth", time, depth);
+    if (depth_image_.cols > 0) {
+        cv_bridge::CvImage cvi;
+        cvi.header.stamp = time;
+        cvi.header.frame_id = "";
+        cvi.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+        cvi.image = depth_image_;
+        cvi.toImageMsg(depth_msg_);
+        bag_out.write("depth", time, depth_msg_);
     }
 
-    if (!mask.data.empty()) {
-        bag_out.write("mask", time, mask);
+    if (mask_image_.cols > 0) {
+        cv_bridge::CvImage cvi;
+        cvi.header.stamp = time;
+        cvi.header.frame_id = "";
+        cvi.encoding = sensor_msgs::image_encodings::TYPE_8UC1;
+        cvi.image = mask_image_;
+        cvi.toImageMsg(mask_msg_);
+        bag_out.write("mask", time, mask_msg_);
     }
 
+    cam_info.header.stamp = time;
+    cam_info.header.frame_id = "";
+    cam_info.width = rgb_image_.cols; // todo: check if size of all modes (rgb, depth, ...) is equal
+    cam_info.height = rgb_image_.rows;
     bag_out.write("camera_info", time, cam_info);
 }
 
 cv::Mat Image::getDepthImage() const {
-    // Convert depth image
-    if (!depth.data.empty()) {
-        try {
-            cv_bridge::CvImagePtr depth_img_ptr = cv_bridge::toCvCopy(depth, "32FC1");
-            return depth_img_ptr->image;
-        } catch (cv_bridge::Exception& e) {
-            ROS_ERROR("cv_bridge exception: %s", e.what());
-        }
-    }
-    return cv::Mat();
+    return depth_image_;
 }
 
 cv::Mat Image::getRGBImage() const {
-    // Convert RGB image
-    if (!rgb.data.empty()) {
-        try {
-            cv_bridge::CvImagePtr img_ptr = cv_bridge::toCvCopy(rgb, sensor_msgs::image_encodings::BGR8);
-            return img_ptr->image;
-        } catch (cv_bridge::Exception& e) {
-            ROS_ERROR("cv_bridge exception: %s", e.what());
-        }
-    }
-    return cv::Mat();
+    return rgb_image_;
 }
 
 cv::Mat Image::getMaskImage() const {
-    // Convert mask image
-    if (!mask.data.empty()) {
-        try {
-            cv_bridge::CvImagePtr depth_img_ptr = cv_bridge::toCvCopy(mask, sensor_msgs::image_encodings::TYPE_8UC1);
-            return depth_img_ptr->image;
-        } catch (cv_bridge::Exception& e) {
-            ROS_ERROR("cv_bridge exception: %s", e.what());
-        }
-    }
-    return cv::Mat();
+    return mask_image_;
 }
 
 void Image::setDepthImage(const cv::Mat& image) {
-    cv_bridge::CvImage cvi;
-    cvi.header.stamp = ros::Time::now();
-    cvi.header.frame_id = "";
-    cvi.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
-    cvi.image = image;
-
-    cam_info.header.stamp = cvi.header.stamp;
-    cam_info.header.frame_id = cvi.header.frame_id;
-    cam_info.width = image.cols;
-    cam_info.height = image.rows;
-
-    cvi.toImageMsg(depth);
+    depth_image_ = image;
 }
 
 void Image::setRGBImage(const cv::Mat& image) {
-    cv_bridge::CvImage cvi;
-    cvi.header.stamp = ros::Time::now();
-    cvi.header.frame_id = "";
-    cvi.encoding = sensor_msgs::image_encodings::BGR8;
-    cvi.image = image;
-
-    cam_info.header.stamp = cvi.header.stamp;
-    cam_info.header.frame_id = cvi.header.frame_id;
-    cam_info.width = image.cols;
-    cam_info.height = image.rows;
-
-    cvi.toImageMsg(rgb);
+    rgb_image_ = image;
 }
 
 void Image::setMaskImage(const cv::Mat& image) {
-    cv_bridge::CvImage cvi;
-    cvi.header.stamp = ros::Time::now();
-    cvi.header.frame_id = "";
-    cvi.encoding = sensor_msgs::image_encodings::TYPE_8UC1;
-    cvi.image = image;
-
-    cam_info.header.stamp = cvi.header.stamp;
-    cam_info.header.frame_id = cvi.header.frame_id;
-    cam_info.width = image.cols;
-    cam_info.height = image.rows;
-
-    cvi.toImageMsg(mask);
+    mask_image_ = image;
 }
