@@ -6,12 +6,12 @@ int main(int argc, char **argv) {
     ros::init(argc,argv,"virtual_cam_loader");
     ros::NodeHandle nh;
 
-    if (argc != 2) {
-        cout << "Usage: load FILENAME" << endl;
+    if (argc != 5) {
+        cout << "Usage: load FILENAME RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC" << endl;
         return 1;
     }
 
-    ImageLoader loader("/camera/rgb/image_rect_color", "/camera/depth_registered/image", "/camera/rgb/camera_info", "/openni_rgb_optical_frame");
+    ImageLoader loader(argv[2], argv[3], argv[4], "/openni_rgb_optical_frame");
     loader.load(argv[1]);
 
     ros::Rate r(10);

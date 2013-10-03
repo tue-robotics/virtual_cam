@@ -80,19 +80,28 @@ int main(int argc, char **argv) {
     ros::init(argc,argv,"virtual_cam_saver");
     ros::NodeHandle nh("~");
 
-    if (argc != 2) {
-        cout << "Usage: save MODE [FILENAME]" << endl;
+    bool service_mode = (argc > 1 && std::string(argv[1]) == "SERVICE");
+
+    if (argc != 5) {
+        cout << "Usage:" << endl
+             << "    save SERVICE RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC" << endl
+             << "or" << endl
+             << "    save FILENAME RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC" << endl;
         return 1;
     }
 
-    message_filters::Subscriber<sensor_msgs::Image> sub_img(nh, "/camera/rgb/image_rect_color", 1);
-    message_filters::Subscriber<sensor_msgs::CameraInfo> sub_cam_info(nh, "/camera/rgb/camera_info", 1);
-    message_filters::Subscriber<sensor_msgs::Image> sub_disp_img(nh, "/camera/depth_registered/image", 1);
+    std::string rgb_topic = argv[2];
+    std::string depth_topic = argv[3];
+    std::string cam_info_topic = argv[4];
+
+    message_filters::Subscriber<sensor_msgs::Image> sub_img(nh, rgb_topic, 1);
+    message_filters::Subscriber<sensor_msgs::Image> sub_disp_img(nh, depth_topic, 1);
+    message_filters::Subscriber<sensor_msgs::CameraInfo> sub_cam_info(nh, cam_info_topic, 1);
 
     // register the subscribers using approximate synchronizer
     message_filters::Synchronizer<CamSyncPolicy> sync(CamSyncPolicy(25), sub_img, sub_cam_info, sub_disp_img);
 
-    if(strcmp(argv[1], "SERVICE") == 0)
+    if (service_mode)
     {
         ROS_INFO("Started in service mode...");
         sync.registerCallback(boost::bind(&ImageCallbackCheese, _1, _2, _3));
@@ -105,7 +114,7 @@ int main(int argc, char **argv) {
     }
     else
     {
-        ROS_INFO("Started in stand-alone mode...");
+        ROS_INFO("Listening to topics ...");
         filename = argv[1];
 
         sync.registerCallback(boost::bind(&ImageCallback, _1, _2, _3));
