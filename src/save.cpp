@@ -21,6 +21,9 @@
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
+// tf
+#include <tf/transform_listener.h>
+
 #include <fstream>
 
 #include <rosbag/bag.h>
@@ -34,8 +37,9 @@ using namespace std;
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image> CamSyncPolicy;
 
 string filename;
-
 bool stored = false;
+std::string cam_frame_id;
+rosbag::Bag bag_out;
 
 
 //Stuff for the cheese service
@@ -67,13 +71,21 @@ void ImageCallback(const sensor_msgs::ImageConstPtr image_msg,
         const sensor_msgs::CameraInfoConstPtr cam_info_msg,
         const sensor_msgs::ImageConstPtr depth_image_msg) {
 
-    rosbag::Bag bag_out;
     bag_out.open(filename, rosbag::bagmode::Write);
     bag_out.write("rgb", ros::Time::now(), *image_msg);
     bag_out.write("depth", ros::Time::now(), *depth_image_msg);
     bag_out.write("camera_info", ros::Time::now(), *cam_info_msg);
 
+    cam_frame_id = image_msg->header.frame_id;
+
     stored = true;
+}
+
+void showUsage() {
+    cout << "Usage:" << endl
+         << "    save SERVICE RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC" << endl
+         << "or" << endl
+         << "    save FILENAME RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC [ -tf PARENT_FRAME ]" << endl;
 }
 
 int main(int argc, char **argv) {
@@ -82,17 +94,24 @@ int main(int argc, char **argv) {
 
     bool service_mode = (argc > 1 && std::string(argv[1]) == "SERVICE");
 
-    if (argc != 5) {
-        cout << "Usage:" << endl
-             << "    save SERVICE RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC" << endl
-             << "or" << endl
-             << "    save FILENAME RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC" << endl;
+    if (argc < 5) {
+        showUsage();
         return 1;
     }
 
     std::string rgb_topic = argv[2];
     std::string depth_topic = argv[3];
     std::string cam_info_topic = argv[4];
+
+    std::string tf_parent_frame;
+    if (argc == 7) {
+        if (std::string(argv[5]) == "-tf") {
+            tf_parent_frame = argv[6];
+        } else {
+            showUsage();
+            return 1;
+        }
+    }
 
     message_filters::Subscriber<sensor_msgs::Image> sub_img(nh, rgb_topic, 1);
     message_filters::Subscriber<sensor_msgs::Image> sub_disp_img(nh, depth_topic, 1);
@@ -101,8 +120,7 @@ int main(int argc, char **argv) {
     // register the subscribers using approximate synchronizer
     message_filters::Synchronizer<CamSyncPolicy> sync(CamSyncPolicy(25), sub_img, sub_cam_info, sub_disp_img);
 
-    if (service_mode)
-    {
+    if (service_mode) {
         ROS_INFO("Started in service mode...");
         sync.registerCallback(boost::bind(&ImageCallbackCheese, _1, _2, _3));
         snapShotService = nh.advertiseService<virtual_cam::cheeseRequest, virtual_cam::cheeseResponse>("cheese", boost::bind(&takeAPicturePNG, _1, _2));
@@ -111,9 +129,8 @@ int main(int argc, char **argv) {
             ros::spinOnce();
             r.sleep();
         }
-    }
-    else
-    {
+    } else {
+
         ROS_INFO("Listening to topics ...");
         filename = argv[1];
 
@@ -125,6 +142,25 @@ int main(int argc, char **argv) {
         }
 
         if (stored) {
+            if (tf_parent_frame != "") {
+                tf::TransformListener tf_listener;
+                if (tf_listener.waitForTransform(tf_parent_frame, cam_frame_id, ros::Time(), ros::Duration(3))) {
+                    tf::StampedTransform transform;
+                    tf_listener.lookupTransform(tf_parent_frame, cam_frame_id, ros::Time(), transform);
+
+                    geometry_msgs::TransformStamped transform_msg;
+                    tf::transformStampedTFToMsg(transform, transform_msg);
+
+                    tf::tfMessage tf_msg;
+                    tf_msg.transforms.push_back(transform_msg);
+
+                    bag_out.write("tf", ros::Time::now(), tf_msg);
+
+                } else {
+                    cerr << "No transform available between " << tf_parent_frame << " and " << cam_frame_id << std::endl;
+                }
+            }
+
             cout << "Success" << endl;
         }
     }

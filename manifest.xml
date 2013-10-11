@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/virtual_cam</url>
   <depend package="roscpp"/>
   <depend package="sensor_msgs"/>
+  <depend package="tf"/>
 
   <depend package="opencv2"/>
   <depend package="std_msgs"/>
