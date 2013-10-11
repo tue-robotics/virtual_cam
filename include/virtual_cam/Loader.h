@@ -5,6 +5,7 @@
 
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <tf/transform_datatypes.h>
 
 #include <fstream>
 
@@ -15,6 +16,8 @@
 #include <boost/foreach.hpp>
 
 #include <cv_bridge/cv_bridge.h>
+
+#include <tf/transform_broadcaster.h>
 
 class ImageLoader {
 
@@ -43,10 +46,13 @@ protected:
     mutable sensor_msgs::Image rgb;
     mutable sensor_msgs::Image depth;
     mutable sensor_msgs::CameraInfo cam_info;
+    mutable tf::StampedTransform transform;
 
     ros::Publisher pub_rgb;
     ros::Publisher pub_depth;
     ros::Publisher pub_cam_info;
+
+    mutable tf::TransformBroadcaster tf_broadcaster;
 
 };
 

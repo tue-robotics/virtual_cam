@@ -40,6 +40,10 @@ void ImageLoader::load(const std::string& filename) {
         } else if (m.getTopic() == "camera_info") {
             cam_info = *m.instantiate<sensor_msgs::CameraInfo>();
             cam_info.header.frame_id = frame_id_;
+        } else if (m.getTopic() == "tf") {
+            geometry_msgs::TransformStamped transform_msg = *m.instantiate<geometry_msgs::TransformStamped>();
+            tf::transformStampedMsgToTF(transform_msg, transform);
+            transform.child_frame_id_ = frame_id_;
         }
     }
 }
@@ -71,9 +75,15 @@ void ImageLoader::publish() const {
 
     rgb.header.stamp = time;
     depth.header.stamp = time;
-    cam_info.header.stamp = time;
+    cam_info.header.stamp = time;    
 
     pub_rgb.publish(rgb);
     pub_depth.publish(depth);
     pub_cam_info.publish(cam_info);
+
+    if (transform.child_frame_id_ != "") {
+        transform.stamp_ = time;
+        tf_broadcaster.sendTransform(transform);
+    }
+
 }

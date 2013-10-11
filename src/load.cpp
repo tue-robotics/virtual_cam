@@ -6,12 +6,12 @@ int main(int argc, char **argv) {
     ros::init(argc,argv,"virtual_cam_loader");
     ros::NodeHandle nh;
 
-    if (argc != 5) {
-        cout << "Usage: load FILENAME RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC" << endl;
+    if (argc != 6) {
+        cout << "Usage: load FILENAME RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC CAMERA_FRAME" << endl;
         return 1;
     }
 
-    ImageLoader loader(argv[2], argv[3], argv[4], "/amigo/top_kinect/openni_rgb_optical_frame");
+    ImageLoader loader(argv[2], argv[3], argv[4], argv[5]);
     loader.load(argv[1]);
 
     ros::Rate r(10);

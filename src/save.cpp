@@ -150,11 +150,7 @@ int main(int argc, char **argv) {
 
                     geometry_msgs::TransformStamped transform_msg;
                     tf::transformStampedTFToMsg(transform, transform_msg);
-
-                    tf::tfMessage tf_msg;
-                    tf_msg.transforms.push_back(transform_msg);
-
-                    bag_out.write("tf", ros::Time::now(), tf_msg);
+                    bag_out.write("tf", ros::Time::now(), transform_msg);
 
                 } else {
                     cerr << "No transform available between " << tf_parent_frame << " and " << cam_frame_id << std::endl;
