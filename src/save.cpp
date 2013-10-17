@@ -34,7 +34,7 @@
 using namespace std;
 
 // Typedef for synchronizer policy
-typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image> CamSyncPolicy;
+typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::Image, sensor_msgs::CameraInfo> CamSyncPolicy;
 
 string filename;
 bool stored = false;
@@ -61,7 +61,8 @@ bool takeAPicturePNG(virtual_cam::cheeseRequest &req, virtual_cam::cheeseRespons
 
 void ImageCallbackCheese(const sensor_msgs::ImageConstPtr image_msg,
         const sensor_msgs::CameraInfoConstPtr cam_info_msg,
-        const sensor_msgs::ImageConstPtr depth_image_msg)
+        const sensor_msgs::ImageConstPtr depth_image_msg,
+        const sensor_msgs::CameraInfoConstPtr cam_info_depth_msg)
 {
     rgb_image = image_msg;
 }
@@ -69,12 +70,14 @@ void ImageCallbackCheese(const sensor_msgs::ImageConstPtr image_msg,
 
 void ImageCallback(const sensor_msgs::ImageConstPtr image_msg,
         const sensor_msgs::CameraInfoConstPtr cam_info_msg,
-        const sensor_msgs::ImageConstPtr depth_image_msg) {
+        const sensor_msgs::ImageConstPtr depth_image_msg,
+        const sensor_msgs::CameraInfoConstPtr cam_info_depth_msg) {
 
     bag_out.open(filename, rosbag::bagmode::Write);
     bag_out.write("rgb", ros::Time::now(), *image_msg);
     bag_out.write("depth", ros::Time::now(), *depth_image_msg);
     bag_out.write("camera_info", ros::Time::now(), *cam_info_msg);
+    bag_out.write("depth_camera_info", ros::Time::now(), *cam_info_depth_msg);
 
     cam_frame_id = image_msg->header.frame_id;
 
@@ -83,9 +86,9 @@ void ImageCallback(const sensor_msgs::ImageConstPtr image_msg,
 
 void showUsage() {
     cout << "Usage:" << endl
-         << "    save SERVICE RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC" << endl
+         << "    save SERVICE RGB_TOPIC DEPTH_TOPIC RGB_CAM_INFO_TOPIC DEPTH_CAM_INFO_TOPIC" << endl
          << "or" << endl
-         << "    save FILENAME RGB_TOPIC DEPTH_TOPIC CAM_INFO_TOPIC [ -tf PARENT_FRAME ]" << endl;
+         << "    save FILENAME RGB_TOPIC DEPTH_TOPIC RGB_CAM_INFO_TOPIC DEPTH_CAM_INFO_TOPIC [ -tf PARENT_FRAME ]" << endl;
 }
 
 int main(int argc, char **argv) {
@@ -94,19 +97,20 @@ int main(int argc, char **argv) {
 
     bool service_mode = (argc > 1 && std::string(argv[1]) == "SERVICE");
 
-    if (argc < 5) {
+    if (argc < 6) {
         showUsage();
         return 1;
     }
 
     std::string rgb_topic = argv[2];
     std::string depth_topic = argv[3];
-    std::string cam_info_topic = argv[4];
+    std::string rgb_cam_info_topic = argv[4];
+    std::string depth_cam_info_topic = argv[5];
 
     std::string tf_parent_frame;
-    if (argc == 7) {
-        if (std::string(argv[5]) == "-tf") {
-            tf_parent_frame = argv[6];
+    if (argc == 8) {
+        if (std::string(argv[6]) == "-tf") {
+            tf_parent_frame = argv[7];
         } else {
             showUsage();
             return 1;
@@ -115,14 +119,15 @@ int main(int argc, char **argv) {
 
     message_filters::Subscriber<sensor_msgs::Image> sub_img(nh, rgb_topic, 1);
     message_filters::Subscriber<sensor_msgs::Image> sub_disp_img(nh, depth_topic, 1);
-    message_filters::Subscriber<sensor_msgs::CameraInfo> sub_cam_info(nh, cam_info_topic, 1);
+    message_filters::Subscriber<sensor_msgs::CameraInfo> sub_cam_info(nh, rgb_cam_info_topic, 1);
+    message_filters::Subscriber<sensor_msgs::CameraInfo> sub_cam_info_depth(nh, rgb_cam_info_topic, 1);
 
     // register the subscribers using approximate synchronizer
-    message_filters::Synchronizer<CamSyncPolicy> sync(CamSyncPolicy(25), sub_img, sub_cam_info, sub_disp_img);
+    message_filters::Synchronizer<CamSyncPolicy> sync(CamSyncPolicy(25), sub_img, sub_cam_info, sub_disp_img, sub_cam_info_depth);
 
     if (service_mode) {
         ROS_INFO("Started in service mode...");
-        sync.registerCallback(boost::bind(&ImageCallbackCheese, _1, _2, _3));
+        sync.registerCallback(boost::bind(&ImageCallbackCheese, _1, _2, _3, _4));
         snapShotService = nh.advertiseService<virtual_cam::cheeseRequest, virtual_cam::cheeseResponse>("cheese", boost::bind(&takeAPicturePNG, _1, _2));
         ros::Rate r(2);
         while(ros::ok()) {
@@ -134,7 +139,7 @@ int main(int argc, char **argv) {
         ROS_INFO("Listening to topics ...");
         filename = argv[1];
 
-        sync.registerCallback(boost::bind(&ImageCallback, _1, _2, _3));
+        sync.registerCallback(boost::bind(&ImageCallback, _1, _2, _3, _4));
         ros::Rate r(10);
         while(ros::ok() && !stored) {
             ros::spinOnce();
