@@ -31,6 +31,8 @@ public:
 
     void load(const std::string& filename);
 
+    void setDepthCameraTopic(const std::string& topic);
+
     cv::Mat getDepthImage() const;
 
     cv::Mat getRGBImage() const;
@@ -46,11 +48,14 @@ protected:
     mutable sensor_msgs::Image rgb;
     mutable sensor_msgs::Image depth;
     mutable sensor_msgs::CameraInfo cam_info;
+    mutable sensor_msgs::CameraInfo cam_info_depth;
     mutable tf::StampedTransform transform;
 
     ros::Publisher pub_rgb;
     ros::Publisher pub_depth;
     ros::Publisher pub_cam_info;
+    ros::Publisher pub_cam_info_depth;
+
 
     mutable tf::TransformBroadcaster tf_broadcaster;
 

@@ -40,12 +40,19 @@ void ImageLoader::load(const std::string& filename) {
         } else if (m.getTopic() == "camera_info") {
             cam_info = *m.instantiate<sensor_msgs::CameraInfo>();
             cam_info.header.frame_id = frame_id_;
+        } else if (m.getTopic() == "depth_camera_info") {
+            cam_info_depth = *m.instantiate<sensor_msgs::CameraInfo>();
+            cam_info_depth.header.frame_id = frame_id_;
         } else if (m.getTopic() == "tf") {
             geometry_msgs::TransformStamped transform_msg = *m.instantiate<geometry_msgs::TransformStamped>();
             tf::transformStampedMsgToTF(transform_msg, transform);
             transform.child_frame_id_ = frame_id_;
         }
     }
+}
+
+void ImageLoader::setDepthCameraTopic(const std::string& topic) {
+    pub_cam_info_depth = nh_->advertise<sensor_msgs::CameraInfo>(topic, 1000);
 }
 
 cv::Mat ImageLoader::getDepthImage() const {
@@ -76,10 +83,12 @@ void ImageLoader::publish() const {
     rgb.header.stamp = time;
     depth.header.stamp = time;
     cam_info.header.stamp = time;    
+    cam_info_depth.header.stamp = time;
 
     pub_rgb.publish(rgb);
     pub_depth.publish(depth);
     pub_cam_info.publish(cam_info);
+    pub_cam_info_depth.publish(cam_info_depth);
 
     if (transform.child_frame_id_ != "") {
         transform.stamp_ = time;
