@@ -41,3 +41,7 @@ target_link_libraries(save yaml-cpp)
 rosbuild_add_executable(load src/load.cpp)
 rosbuild_link_boost(save signals)
 target_link_libraries(load yaml-cpp image_loader)
+
+rosbuild_add_executable(view src/view.cpp)
+target_link_libraries(view image_loader)
+
