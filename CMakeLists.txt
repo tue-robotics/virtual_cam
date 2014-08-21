@@ -24,7 +24,7 @@ generate_messages(
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES image_loader
+  LIBRARIES virtual_cam_image_loader
   CATKIN_DEPENDS message_runtime
 )
 
@@ -35,19 +35,19 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 # Declare a cpp library
-add_library(image_loader
+add_library(virtual_cam_image_loader
     src/Loader.cpp
     src/Image.cpp
 )
-target_link_libraries(image_loader ${catkin_LIBRARIES})
+target_link_libraries(virtual_cam_image_loader ${catkin_LIBRARIES})
 
 add_executable(save src/save.cpp)
 target_link_libraries(save yaml-cpp ${catkin_LIBRARIES})
 
 add_executable(load src/load.cpp)
-target_link_libraries(load yaml-cpp image_loader)
+target_link_libraries(load yaml-cpp virtual_cam_image_loader)
 
 add_executable(view src/view.cpp)
-target_link_libraries(view image_loader)
+target_link_libraries(view virtual_cam_image_loader)
 
 add_dependencies(save ${PROJECT_NAME}_gencpp)
