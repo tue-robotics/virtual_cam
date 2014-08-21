@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(virtual_cam)
 
 find_package(catkin REQUIRED COMPONENTS roscpp message_generation rosbag cv_bridge tf)
+find_package(OpenCV REQUIRED)
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -32,17 +33,17 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 # Declare a cpp library
 add_library(virtual_cam_image_loader
     src/Loader.cpp
     src/Image.cpp
 )
-target_link_libraries(virtual_cam_image_loader ${catkin_LIBRARIES})
+target_link_libraries(virtual_cam_image_loader ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(save src/save.cpp)
-target_link_libraries(save yaml-cpp ${catkin_LIBRARIES})
+target_link_libraries(save yaml-cpp ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(load src/load.cpp)
 target_link_libraries(load yaml-cpp virtual_cam_image_loader)
