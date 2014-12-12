@@ -1,47 +1,53 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(virtual_cam)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+find_package(catkin REQUIRED COMPONENTS roscpp message_generation rosbag cv_bridge tf)
 
-rosbuild_init()
+################################################
+## Declare ROS messages, services and actions ##
+################################################
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+# Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  cheese.srv
+)
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-rosbuild_gensrv()
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
-# to show include files in Qt Creator
-file(GLOB_RECURSE HEADER_FILES include/*.h)
+###################################
+## catkin specific configuration ##
+###################################
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES image_loader
+  CATKIN_DEPENDS message_runtime
+)
 
-rosbuild_add_library(image_loader src/Loader.cpp src/Image.cpp ${HEADER_FILES})
+###########
+## Build ##
+###########
 
-rosbuild_add_executable(save src/save.cpp)
-target_link_libraries(save yaml-cpp)
-#rosbuild_link_boost(save signals)
+include_directories(include ${catkin_INCLUDE_DIRS})
 
-rosbuild_add_executable(load src/load.cpp)
-rosbuild_link_boost(save signals)
+# Declare a cpp library
+add_library(image_loader
+    src/Loader.cpp
+    src/Image.cpp
+)
+target_link_libraries(image_loader ${catkin_LIBRARIES})
+
+add_executable(save src/save.cpp)
+target_link_libraries(save yaml-cpp ${catkin_LIBRARIES})
+
+add_executable(load src/load.cpp)
 target_link_libraries(load yaml-cpp image_loader)
 
-rosbuild_add_executable(view src/view.cpp)
+add_executable(view src/view.cpp)
 target_link_libraries(view image_loader)
 
+add_dependencies(save ${PROJECT_NAME}_gencpp)
