@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(virtual_cam)
 
-find_package(catkin REQUIRED COMPONENTS roscpp message_generation rosbag cv_bridge tf)
+find_package(catkin REQUIRED COMPONENTS roscpp message_generation rosbag cv_bridge tf rgbd)
 find_package(OpenCV REQUIRED)
 
 ################################################
@@ -44,6 +44,7 @@ target_link_libraries(virtual_cam_image_loader ${catkin_LIBRARIES} ${OpenCV_LIBR
 
 add_executable(save src/save.cpp)
 target_link_libraries(save yaml-cpp ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+add_dependencies(save ${PROJECT_NAME}_gencpp)
 
 add_executable(load src/load.cpp)
 target_link_libraries(load yaml-cpp virtual_cam_image_loader)
@@ -51,4 +52,6 @@ target_link_libraries(load yaml-cpp virtual_cam_image_loader)
 add_executable(view src/view.cpp)
 target_link_libraries(view virtual_cam_image_loader)
 
-add_dependencies(save ${PROJECT_NAME}_gencpp)
+add_executable(crop src/crop.cpp)
+target_link_libraries(crop virtual_cam_image_loader ${catkin_LIBRARIES})
+
