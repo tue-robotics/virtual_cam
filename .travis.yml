@@ -16,6 +16,4 @@ install:
 
 script:
   - bash build-package.sh --package=$PACKAGE
-
-after_success:
   - bash test-package.sh --package=$PACKAGE
