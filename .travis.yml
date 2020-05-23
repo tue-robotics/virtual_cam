@@ -1,13 +1,14 @@
-sudo: true
-
+os: linux
+dist: xenial
 language: cpp
 
 services:
   - docker
 
 before_install:
-  - wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/install-package.sh
-  - wget https://raw.githubusercontent.com/tue-robotics/tue-env/master/ci/build-package.sh
+  - wget https://raw.githubusercontent.com/tue-robotics/tue-env/fix/ci_pr/ci/install-package.sh
+  - wget https://raw.githubusercontent.com/tue-robotics/tue-env/fix/ci_pr/ci/build-package.sh
+  - wget https://raw.githubusercontent.com/tue-robotics/tue-env/fix/ci_pr/ci/test-package.sh
   - export PACKAGE=${TRAVIS_REPO_SLUG#*/}
 
 install:
@@ -15,3 +16,6 @@ install:
 
 script:
   - bash build-package.sh --package=$PACKAGE
+
+after_success:
+  - bash test-package.sh --package=$PACKAGE
