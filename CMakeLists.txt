@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(virtual_cam)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
-
-find_package(catkin REQUIRED COMPONENTS roscpp message_generation rosbag cv_bridge tf rgbd)
+find_package(catkin REQUIRED COMPONENTS cv_bridge roscpp message_generation rgbd rosbag std_msgs tf )
 find_package(OpenCV REQUIRED)
 
 ################################################
@@ -29,7 +26,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES virtual_cam_image_loader
-  CATKIN_DEPENDS message_runtime
+  CATKIN_DEPENDS message_runtime std_msgs
 )
 
 ###########
