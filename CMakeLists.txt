@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(virtual_cam)
 
-find_package(catkin REQUIRED COMPONENTS cv_bridge roscpp message_generation rgbd rosbag std_msgs tf )
+find_package(catkin REQUIRED COMPONENTS cv_bridge roscpp message_generation rgbd rosbag tf)
 find_package(OpenCV REQUIRED)
 
 ################################################
@@ -16,7 +16,6 @@ add_service_files(
 
 generate_messages(
   DEPENDENCIES
-  std_msgs
 )
 
 ###################################
@@ -26,7 +25,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES virtual_cam_image_loader
-  CATKIN_DEPENDS message_runtime std_msgs
+  CATKIN_DEPENDS message_runtime
 )
 
 ###########

@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
-<package>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>virtual_cam</name>
   <version>0.0.0</version>
   <description>The virtual_cam package</description>
@@ -9,7 +12,7 @@
   <license>TODO</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  
+
   <depend>cv_bridge</depend>
   <depend>image_geometry</depend>
   <depend>message_filters</depend>
@@ -17,7 +20,6 @@
   <depend>rosbag</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
   <depend>stereo_msgs</depend>
   <depend>tf</depend>
   <depend>yaml-cpp</depend>
