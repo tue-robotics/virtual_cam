@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(virtual_cam)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
-
-find_package(catkin REQUIRED COMPONENTS roscpp message_generation rosbag cv_bridge tf rgbd)
+find_package(catkin REQUIRED COMPONENTS cv_bridge roscpp message_generation rgbd rosbag tf)
 find_package(OpenCV REQUIRED)
 
 ################################################
@@ -19,7 +16,6 @@ add_service_files(
 
 generate_messages(
   DEPENDENCIES
-  std_msgs
 )
 
 ###################################
