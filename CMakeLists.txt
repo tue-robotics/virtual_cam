@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(virtual_cam)
 
+add_compile_options(-Wall -Werror=all)
+add_compile_options(-Wextra -Werror=extra)
+
 find_package(catkin REQUIRED COMPONENTS cv_bridge roscpp message_generation rgbd rosbag tf)
 find_package(OpenCV REQUIRED)
 
