@@ -57,7 +57,7 @@ Image Crop()
 
 // ----------------------------------------------------------------------------------------------------
 
-void CallBackFunc(int event, int x, int y, int flags, void* userdata)
+void CallBackFunc(int event, int x, int y, int /*flags*/, void* /*userdata*/)
 {
     cv::Point2d mouse_pos(x / (double)rgb_resized.cols, y / (double)rgb_resized.cols);
 
