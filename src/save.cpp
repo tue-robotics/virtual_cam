@@ -60,9 +60,9 @@ bool takeAPicturePNG(virtual_cam::cheeseRequest &req, virtual_cam::cheeseRespons
 
 
 void ImageCallbackCheese(const sensor_msgs::ImageConstPtr image_msg,
-        const sensor_msgs::CameraInfoConstPtr cam_info_msg,
-        const sensor_msgs::ImageConstPtr depth_image_msg,
-        const sensor_msgs::CameraInfoConstPtr cam_info_depth_msg)
+        const sensor_msgs::CameraInfoConstPtr /*cam_info_msg*/,
+        const sensor_msgs::ImageConstPtr /*depth_image_msg*/,
+        const sensor_msgs::CameraInfoConstPtr /*cam_info_depth_msg*/)
 {
     rgb_image = image_msg;
 }

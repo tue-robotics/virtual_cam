@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(virtual_cam)
+
+add_compile_options(-Wall -Werror=all)
+add_compile_options(-Wextra -Werror=extra)
 
 find_package(catkin REQUIRED COMPONENTS cv_bridge roscpp message_generation rgbd rosbag tf)
 find_package(OpenCV REQUIRED)
@@ -32,7 +35,7 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+include_directories(include SYSTEM ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 # Declare a cpp library
 add_library(virtual_cam_image_loader
